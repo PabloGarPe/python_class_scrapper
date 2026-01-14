@@ -36,11 +36,16 @@ def getListClass(page: Page):
 
 
 if __name__ == "__main__":    
-    if len(sys.argv) < 2:
-        print(json.dumps({"error": "Debes proporcionar el valor del UO como argumento"}))
-        sys.exit(1)
-    
-    uo = sys.argv[1].capitalize()
+    if len(sys.argv) >= 2:
+        uo = sys.argv[1].capitalize()
+    else:
+        # Modo interactivo
+        print("Ingresa el valor del UO:")
+        uo = input().strip().capitalize()
+        
+        if not uo:
+            print(json.dumps({"error": "Debes proporcionar un valor válido para UO"}))
+            sys.exit(1)
     
     try:
         with sync_playwright() as p:
@@ -55,7 +60,7 @@ if __name__ == "__main__":
                 "uo": uo,
                 "classes": class_list
             }
-            print(json.dumps(result))
+            print(json.dumps(result, ensure_ascii=False, indent=2))
             
             browser.close()
     except Exception as e:
@@ -63,9 +68,5 @@ if __name__ == "__main__":
             "success": False,
             "error": str(e)
         }
-        print(json.dumps(error_result))
+        print(json.dumps(error_result, ensure_ascii=False, indent=2))
         sys.exit(1)
-
-
-
-
