@@ -2,6 +2,10 @@ from playwright.sync_api import Page, sync_playwright
 import sys
 import json
 
+BASE_URL = "https://gobierno.ingenieriainformatica.uniovi.es/grado/gd/?y=25-26&t=s2" 
+# To change year you must change 'y' parameter in the URL
+# 't' parameter is for term: s1 = first term, s2 = second term
+
 def get_element_by_uo(page: Page, uo_value: str):
     """
     Retrieve a web element using a custom 'uo' attribute.
@@ -13,7 +17,7 @@ def get_element_by_uo(page: Page, uo_value: str):
     Returns:
         ElementHandle: The located web element.
     """
-    page.goto("https://gobierno.ingenieriainformatica.uniovi.es/grado/gd/?y=25-26&t=s2")
+    page.goto(BASE_URL)
     element = page.locator(f'a:has-text("{uo_value}")').first
     href = element.get_attribute("href")
     page.goto(href)
