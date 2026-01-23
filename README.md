@@ -15,18 +15,32 @@ This scraper automates the process of fetching your class schedule from the UNIO
 
 ### Prerequisites
 - Python 3.8 or higher
-- pip (Python package manager)
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
 
 ### Setup
 
 1. **Clone or download this repository**
+   
+2. **Install uv (if not already installed):**
+  ```bash
+   # On macOS and Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   
+   # On Windows
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   
+   # Or with pip
+   pip install uv
+  ```
 
-2. **Install dependencies:**
+3. **Install dependencies and activate virtual environment:**
    ```bash
-   pip install -r requirements.txt
+   # uv will automatically create a virtual environment and install dependencies
+   uv sync
+   source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
    ```
 
-3. **Install Playwright browsers:**
+4. **Install Playwright browsers:**
    ```bash
    playwright install chromium
    ```
