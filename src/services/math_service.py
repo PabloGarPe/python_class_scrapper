@@ -229,7 +229,7 @@ class MathService:
         
         class_pattern = re.compile(r'^[A-Za-z]+[A-Za-z0-9]*-[A-Z]{2}\d+')
         
-        classes = Set[str] = set()
+        classes: Set[str] = set()
         
         for col in df.columns:
             for value in df[col]:
@@ -250,7 +250,7 @@ class MathService:
         
         for class_code in classes:
             parts = class_code.split('-')
-            if len(parts) != 2:
+            if len(parts) == 2:
                 subject = parts[0]
                 
                 if subject not in subjects:

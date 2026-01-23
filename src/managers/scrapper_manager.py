@@ -18,6 +18,7 @@ class ScrapperManager:
         self.browser: Optional[Browser] = None
         self.context: Optional[BrowserContext] = None
         self.temp_dir: Optional[str] = None
+        self.playwright = None
         
     async def initialize(self):
         """Initialize the navigator with a temporary directory."""
@@ -32,7 +33,7 @@ class ScrapperManager:
     async def create_page(self) -> Page:
         """Create a new page in the current browser context."""
         if self.context is None:
-            raise Exception("Browser context is not initialized.")
+            raise RuntimeError("ScrapperManager no inicializado")
         page = await self.context.new_page()
         page.set_default_navigation_timeout(self.PAGE_LOAD_TIMEOUT)
         page.set_default_timeout(self.SELECTOR_TIMEOUT)
