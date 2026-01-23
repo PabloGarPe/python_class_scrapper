@@ -1,4 +1,6 @@
-from typing import Any, Dict
+import pandas as pd
+import re
+from typing import Any, Dict, List, Set
 from pathlib import Path
 
 from playwright.async_api import Error as PlaywrightError, Page
@@ -195,14 +197,68 @@ class MathService:
             return None
         
     def process_xlsx_file(self, file_path: Path) -> Dict[str, Any]:
-        """Processes the downloaded XLSX file and extracts class information."""
+        """Processes the downloaded XLS file and extracts class information."""
         
-        # Placeholder for actual XLSX processing logic
-        # This should read the XLSX file and extract relevant data
+        # Processing logic
+        try:
+            df = pd.read_excel(file_path, engine='xlrd')
+            
+            logger.info(f"Processing file: {file_path}")
+            
+            classes = self._extract_classes_from_dataframe(df)
+            
+            subjects = self._organize_by_subject(classes)
+            
+            logger.info(f"Found {len(subjects)} subjects in the file.")
+            return {
+                "success": True,
+                "uo": None,
+                "classes": classes,
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing file: {e}")
+            return {
+                "success": False,
+                "uo": None,
+                "classes": [],
+            }
+            
+    def _extract_classes_from_dataframe(self, df: pd.DataFrame) -> List[str]:
+        """Extracts class names from the DataFrame."""
         
-        # For demonstration, returning a dummy result
-        return {
-            "success": True,
-            "uo": file_path.stem.split("_")[-1],
-            "classes": ["Class1", "Class2", "Class3"],
-        }
+        class_pattern = re.compile(r'^[A-Za-z]+[A-Za-z0-9]*-[A-Z]{2}\d+')
+        
+        classes = Set[str] = set()
+        
+        for col in df.columns:
+            for value in df[col]:
+                if pd.notna(value) and isinstance(value, str):
+                    value = value.strip()
+                    
+                    if class_pattern.match(value):
+                        if len(value) > 3 and '-' in value:
+                            classes.add(value)
+                            logger.debug(f"  Extracted class: {value}")
+                            
+        return sorted(classes)
+    
+    def _organize_by_subject(self, classes: List[str]) -> Dict[str, List[str]]:
+        """Organizes classes by subject code."""
+        
+        subjects: Dict[str, List[str]] = {}
+        
+        for class_code in classes:
+            parts = class_code.split('-')
+            if len(parts) != 2:
+                subject = parts[0]
+                
+                if subject not in subjects:
+                    subjects[subject] = []
+                    
+                subjects[subject].append(class_code)
+                
+        for subject in subjects:
+            subjects[subject] = sorted(subjects[subject])
+            
+        return subjects

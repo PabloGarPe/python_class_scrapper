@@ -22,7 +22,7 @@ class ScrapperManager:
     async def initialize(self):
         """Initialize the navigator with a temporary directory."""
         self.playwright = await async_playwright().start()
-        self.browser = await self.playwright.chromium.launch(headless=False)
+        self.browser = await self.playwright.chromium.launch(headless=True)
         self.temp_dir = tempfile.mkdtemp(prefix="xlsx_scrapping_")
         
         self.context = await self.browser.new_context(
