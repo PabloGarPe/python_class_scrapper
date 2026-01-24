@@ -2,6 +2,7 @@ import pandas as pd
 import re
 from typing import Any, Dict, List, Set
 from pathlib import Path
+from ..utils.settings import MATH_SITE_URL
 
 from playwright.async_api import Error as PlaywrightError, Page
 
@@ -17,7 +18,7 @@ class MathService:
     
     def __init__(self, scrapper_manager):
         self.scrapper_manager = scrapper_manager
-        self.site_url = "https://unioviedo-my.sharepoint.com/:f:/g/personal/perezfernandez_uniovi_es/Eu9qlYNQEYhMi2gDAxmrmvABPSoVDkYi4cCTXf_ZVyql9w?e=a3ZGBs"
+        self.site_url = MATH_SITE_URL
         
     async def scrape_and_process(self, uo_value: str) -> Dict[str, Any]:
         """Downloads and processes math schedules for a given UO value."""

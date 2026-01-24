@@ -31,14 +31,13 @@ async def scrape_all(uo_value: str) -> dict:
         math_service = MathService(scrapper_manager)
         
         # Normalize UO format
-        uo_formatted = uo_value if uo_value.lower().startswith("uo") else f"Uo{uo_value}"
-        uo_number = uo_value.replace("Uo", "").replace("uo", "").replace("UO", "")
+        uo_formatted = uo_value if uo_value.lower().startswith("uo") else f"uo{uo_value}"
         
         # Try InfoService (gobierno.ingenieriainformatica)
         info_result = await info_service.scrape_and_process(uo_formatted)
         
         # Try MathService (SharePoint) in parallel
-        math_result = await math_service.scrape_and_process(uo_number)
+        math_result = await math_service.scrape_and_process(uo_formatted)
         
         # Combine results
         all_classes = []

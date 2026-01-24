@@ -1,4 +1,5 @@
 from playwright.async_api import Page, Error as PlaywrightError
+from ..utils.settings import INFO_SITE_URL
 
 from ..utils.settings import get_logger
 
@@ -12,7 +13,7 @@ class InfoService:
     
     def __init__(self, scrapper_manager):
         self.scrapper_manager = scrapper_manager
-        self.site_url = "https://gobierno.ingenieriainformatica.uniovi.es/grado/gd/?y=25-26&t=s2"
+        self.site_url = INFO_SITE_URL
         
     async def scrape_and_process(self, uo_value: str):
         """Scrape information based on the provided 'uo' value and process it."""
