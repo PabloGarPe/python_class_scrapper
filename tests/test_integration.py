@@ -273,9 +273,10 @@ async def test_process_xlsx_file_success():
         # Guardar como Excel (requiere xlwt para .xls)
         try:
             df.to_excel(tmp_path, index=False, engine='xlwt')
-        except ImportError:
+        except (ImportError, ValueError):
             # Si xlwt no está disponible, saltar el test
-            pytest.skip("xlwt no está instalado")
+            tmp_path.unlink(missing_ok=True)
+            pytest.skip("Motor de Excel (xlwt) no está instalado")
     
     try:
         result = service.process_xlsx_file(tmp_path)

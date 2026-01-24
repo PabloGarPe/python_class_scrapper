@@ -36,6 +36,8 @@ class MathService:
             
             file_path.unlink(missing_ok=True) 
             
+            result["uo"] = uo_value
+            
             return result
         
     async def _search_and_download_file(self, page, uo_value: str) -> str:

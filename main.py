@@ -1,76 +1,122 @@
-from playwright.sync_api import Page, sync_playwright
+"""
+Main script to coordinate InfoService and MathService scrapers.
+Retrieves class schedules from both sources and combines the results.
+"""
+import asyncio
 import sys
 import json
 
-BASE_URL = "https://gobierno.ingenieriainformatica.uniovi.es/grado/gd/?y=25-26&t=s2" 
-# To change year you must change 'y' parameter in the URL
-# 't' parameter is for term: s1 = first term, s2 = second term
+from src.managers.scrapper_manager import ScrapperManager
+from src.services.info_service import InfoService
+from src.services.math_service import MathService
 
-def get_element_by_uo(page: Page, uo_value: str):
+
+async def scrape_all(uo_value: str) -> dict:
     """
-    Retrieve a web element using a custom 'uo' attribute.
-
+    Coordinate both scrapers to get complete class information.
+    
     Args:
-        page (Page): The Playwright page object.
-        uo_value (str): The value of the 'uo' attribute to search for.
-
+        uo_value: The UO identifier (e.g., "Uo301887" or "301887")
+    
     Returns:
-        ElementHandle: The located web element.
+        dict: Combined results from both services
     """
-    page.goto(BASE_URL)
-    element = page.locator(f'a:has-text("{uo_value}")').first
-    href = element.get_attribute("href")
-    page.goto(href)
-    return page
-
-def getListClass(page: Page):
-    """
-    Extract a list of class names from the page.
-
-    Args:
-        page (Page): The Playwright page object.
-
-    Returns:
-        list: A list of class names.
-    """
-    class_elements = page.locator('h1 + p')
-    class_elements = class_elements.all_text_contents()[0].split(": ")[1]
-    class_list = class_elements.split("; ")
-    return class_list
-
-
-if __name__ == "__main__":    
-    if len(sys.argv) >= 2:
-        uo = sys.argv[1].capitalize()
-    else:
-        # Modo interactivo
-        print("Ingresa el valor del UO:")
-        uo = input().strip().capitalize()
-        
-        if not uo:
-            print(json.dumps({"error": "Debes proporcionar un valor válido para UO"}))
-            sys.exit(1)
+    # Initialize scrapper manager
+    scrapper_manager = ScrapperManager()
+    await scrapper_manager.initialize()
     
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            
-            page = get_element_by_uo(page, uo)
-            class_list = getListClass(page)
-            
+        # Create service instances
+        info_service = InfoService(scrapper_manager)
+        math_service = MathService(scrapper_manager)
+        
+        # Normalize UO format
+        uo_formatted = uo_value if uo_value.lower().startswith("uo") else f"Uo{uo_value}"
+        uo_number = uo_value.replace("Uo", "").replace("uo", "").replace("UO", "")
+        
+        # Try InfoService (gobierno.ingenieriainformatica)
+        info_result = await info_service.scrape_and_process(uo_formatted)
+        
+        # Try MathService (SharePoint) in parallel
+        math_result = await math_service.scrape_and_process(uo_number)
+        
+        # Combine results
+        all_classes = []
+        success = False
+        
+        if info_result.get("success"):
+            all_classes.extend(info_result.get("classes", []))
+            success = True
+        
+        if math_result.get("success"):
+            all_classes.extend(math_result.get("classes", []))
+            success = True
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_classes = []
+        for cls in all_classes:
+            if cls not in seen:
+                seen.add(cls)
+                unique_classes.append(cls)
+        
+        result = {
+            "success": success,
+            "uo": uo_formatted,
+            "classes": unique_classes,
+            "sources": {
+                "gobierno": info_result.get("success", False),
+                "sharepoint": math_result.get("success", False)
+            }
+        }
+        
+        return result
+        
+    finally:
+        await scrapper_manager.cleanup()
+
+
+async def main_async():
+    """Main async function."""
+    # Get UO from command line or interactive input
+    if len(sys.argv) >= 2:
+        uo = sys.argv[1].strip()
+    else:
+        # Interactive mode
+        print("Ingresa el valor del UO:", file=sys.stderr)
+        uo = input().strip()
+        
+        if not uo:
             result = {
-                "success": True,
-                "uo": uo,
-                "classes": class_list
+                "success": False,
+                "error": "Debes proporcionar un valor válido para UO"
             }
             print(json.dumps(result, ensure_ascii=False, indent=2))
+            sys.exit(1)
+    
+    # Normalize UO format
+    if not uo.lower().startswith("uo"):
+        uo = f"Uo{uo}"
+    else:
+        # Capitalize first letters
+        uo = uo[:2].capitalize() + uo[2:]
+    
+    try:
+        # Run the scraper
+        result = await scrape_all(uo)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        
+        if not result["success"]:
+            sys.exit(1)
             
-            browser.close()
     except Exception as e:
         error_result = {
             "success": False,
-            "error": str(e)
+            "error": str(e),
         }
         print(json.dumps(error_result, ensure_ascii=False, indent=2))
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    asyncio.run(main_async())
