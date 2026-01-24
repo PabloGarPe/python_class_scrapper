@@ -29,19 +29,21 @@ def info_service(scrapper_manager):
 async def test_info_service_creation(info_service):
     """Verifica que InfoService se crea correctamente con ScrapperManager."""
     assert info_service.scrapper_manager is not None
-    assert info_service.site_url is not None
-    assert "gobierno.ingenieriainformatica.uniovi.es" in info_service.site_url
+    assert info_service.site_urls is not None
+    assert isinstance(info_service.site_urls, list)
+    assert len(info_service.site_urls) > 0
+    assert "gobierno.ingenieriainformatica.uniovi.es" in info_service.site_urls[0]
     assert info_service.SELECTOR_TIMEOUT == 60000
     assert info_service.MAX_RETRIES == 3
 
 
 @pytest.mark.asyncio
 async def test_info_service_url_format(info_service):
-    """Verifica que la URL del servicio tiene el formato correcto."""
-    assert info_service.site_url.startswith("https://")
-    assert "grado/gd" in info_service.site_url
-    assert "y=25-26" in info_service.site_url
-    assert "t=s2" in info_service.site_url
+    """Verifica que las URLs del servicio tienen el formato correcto."""
+    assert isinstance(info_service.site_urls, list)
+    for url in info_service.site_urls:
+        assert url.startswith("https://")
+        assert "grado/gd" in url
 
 
 def test_info_service_constants():
@@ -50,8 +52,8 @@ def test_info_service_constants():
     
     assert service.SELECTOR_TIMEOUT == 60000
     assert service.MAX_RETRIES == 3
-    assert isinstance(service.site_url, str)
-    assert len(service.site_url) > 0
+    assert isinstance(service.site_urls, list)
+    assert len(service.site_urls) > 0
 
 
 # ==================== Tests de funcionalidad ====================
@@ -239,7 +241,8 @@ def test_services_have_same_interface():
     assert hasattr(info_service, 'scrapper_manager')
     assert hasattr(math_service, 'scrapper_manager')
     
-    assert hasattr(info_service, 'site_url')
+    # InfoService tiene site_urls (lista), MathService tiene site_url (string)
+    assert hasattr(info_service, 'site_urls')
     assert hasattr(math_service, 'site_url')
     
     assert hasattr(info_service, 'SELECTOR_TIMEOUT')
